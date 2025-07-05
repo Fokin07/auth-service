@@ -39,10 +39,6 @@ func main() {
 	http.HandleFunc("POST /register", handler.Register)
 	http.HandleFunc("POST /login", handler.Login)
 	http.HandleFunc("GET /validate", handler.Validate)
-	//protected := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	///	w.Write([]byte("Protected content"))
-	//})
-	//http.Handle("GET /validate", handler.AuthMiddleware(protected))
 
 	fmt.Println("Server is running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
