@@ -40,6 +40,7 @@ func main() {
 	http.HandleFunc("POST /login", handler.Login)
 	http.HandleFunc("GET /validate", handler.Validate)
 
-	fmt.Println("Server is running on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	port := os.Getenv("AUTH_PORT")
+	fmt.Println("Server is running on port", port)
+	log.Fatal(http.ListenAndServe(port, nil))
 }

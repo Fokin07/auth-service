@@ -20,6 +20,7 @@ The service provides functions such as:
     * DB_NAME="test_user"
     * DB_SSLMODE="disable"
     * SECRET="secret12345" 
+    * AUTH_PORT=":8080"
 3. Clone this repository
 4. Build the auth-service binary: `make build`. You should see an output like this:
 ```
