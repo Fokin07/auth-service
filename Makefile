@@ -14,16 +14,13 @@ GOMOD=$(GO) mod
 SRC_DIR=./cmd
 BUILD_DIR=./bin
 
-# Флаги сборки
-LDFLAGS=-ldflags "-X main.Version=$(VERSION) -X main.BuildTime=$(shell date +%FT%T%z)"
-
 .PHONY: all build clean test run fmt vet lint docker-build help
 
 all: build
 
 ## build: Скомпилировать пример
 build:
-	$(GOBUILD) -C $(SRC_DIR) $(LDFLAGS) -o $(BUILD_DIR)/$(BIN_NAME)
+	$(GOBUILD) -C $(SRC_DIR) -o $(BUILD_DIR)/$(BIN_NAME)
 
 ## clean: Удалить скомпилированные файлы
 clean:	

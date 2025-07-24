@@ -24,7 +24,7 @@ The service provides functions such as:
 3. Clone this repository
 4. Build the auth-service binary: `make build`. You should see an output like this:
 ```
-go build -C ./cmd -ldflags "-X main.Version=0.1.0 -X main.BuildTime=2025-07-05T12:46:06+0300" -o ./bin/auth
+go build -C ./cmd -o ./bin/auth
 ```
 5. Execute the auth-service binary: `./cmd/bin/auth`
 

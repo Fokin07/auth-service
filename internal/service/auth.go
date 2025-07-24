@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,6 +12,9 @@ import (
 	"github.com/AlexFox86/auth-service/internal/pkg/token"
 	"github.com/AlexFox86/auth-service/internal/repository/postgres"
 )
+
+// ErrInvalidCredentials returned when authentication failed due to incorrect credentials
+var ErrInvalidCredentials = errors.New("invalid credentials")
 
 // Service provides methods for authentication and registration
 type Service struct {
@@ -39,20 +43,20 @@ func (s *Service) TokenExpiry() time.Duration {
 }
 
 // Register creates a new user
-func (s *Service) Register(ctx context.Context, req *dto.RegisterRequest) (*models.User, error) {
+func (s *Service) Register(ctx context.Context, req *dto.RegisterRequest) (models.User, error) {
 	hashedPassword, err := crypto.HashPassword(req.Password)
 	if err != nil {
-		return nil, fmt.Errorf("hash password: %w", err)
+		return models.User{}, fmt.Errorf("hash password: %w", err)
 	}
 
-	user := &models.User{
+	user := models.User{
 		Username: req.Username,
 		Email:    req.Email,
 		Password: hashedPassword,
 	}
 
-	if err := s.repo.CreateUser(ctx, user); err != nil {
-		return nil, fmt.Errorf("create user: %w", err)
+	if user, err = s.repo.CreateUser(ctx, user); err != nil {
+		return models.User{}, fmt.Errorf("create user: %w", err)
 	}
 
 	return user, nil
@@ -62,11 +66,11 @@ func (s *Service) Register(ctx context.Context, req *dto.RegisterRequest) (*mode
 func (s *Service) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Response, error) {
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
-		return nil, models.ErrInvalidCredentials
+		return nil, ErrInvalidCredentials
 	}
 
 	if err := crypto.CheckPassword(req.Password, user.Password); err != nil {
-		return nil, models.ErrInvalidCredentials
+		return nil, ErrInvalidCredentials
 	}
 
 	token, err := token.GenerateToken(user, s.jwtSecret, s.tokenExpiry)

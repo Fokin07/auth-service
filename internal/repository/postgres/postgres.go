@@ -12,9 +12,11 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+var errUserNotFound = errors.New("user not found")
+
 // Repository interface for working with storage
 type Repository interface {
-	CreateUser(ctx context.Context, user *models.User) error
+	CreateUser(ctx context.Context, user models.User) (models.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
 }
 
@@ -30,7 +32,7 @@ func NewPgRepository(db *sqlx.DB) *PgRepository {
 }
 
 // CreateUser creates a new user
-func (r *PgRepository) CreateUser(ctx context.Context, user *models.User) error {
+func (r *PgRepository) CreateUser(ctx context.Context, user models.User) (models.User, error) {
 	user.ID = uuid.New()
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = user.CreatedAt
@@ -41,9 +43,9 @@ func (r *PgRepository) CreateUser(ctx context.Context, user *models.User) error 
 
 	_, err := r.db.NamedExecContext(ctx, query, user)
 	if err != nil {
-		return fmt.Errorf("failed to create user: %w", err)
+		return models.User{}, fmt.Errorf("failed to create user: %w", err)
 	}
-	return nil
+	return user, nil
 }
 
 // GetUserByEmail gets the user by email
@@ -54,7 +56,7 @@ func (r *PgRepository) GetUserByEmail(ctx context.Context, email string) (*model
 	err := r.db.GetContext(ctx, &user, query, email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, models.ErrUserNotFound
+			return nil, errUserNotFound
 		}
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}

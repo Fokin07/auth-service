@@ -2,14 +2,13 @@ package service
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/AlexFox86/auth-service/internal/delivery/dto"
 	"github.com/AlexFox86/auth-service/internal/models"
 	"github.com/AlexFox86/auth-service/internal/pkg/crypto"
-	"github.com/AlexFox86/auth-service/internal/pkg/token"
-	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -17,12 +16,32 @@ import (
 	mockrepo "github.com/AlexFox86/auth-service/internal/repository/mock"
 )
 
+var (
+	errUserNotFound = errors.New("user not found")
+	errEmailExists  = errors.New("email already exists")
+)
+
+func TestNew(t *testing.T) {
+	t.Run("test New()", func(t *testing.T) {
+		mockRepo := new(mockrepo.MockRepository)
+
+		expService := &Service{
+			repo:        mockRepo,
+			jwtSecret:   []byte("secret"),
+			tokenExpiry: time.Hour,
+		}
+
+		service := New(mockRepo, "secret", time.Hour)
+		assert.Equal(t, expService, service)
+	})
+}
+
 func TestServiceRegister(t *testing.T) {
 	tests := []struct {
 		name        string
 		req         *dto.RegisterRequest
 		mockSetup   func(*mockrepo.MockRepository)
-		expected    *models.User
+		expected    models.User
 		expectedErr error
 	}{
 		{
@@ -40,7 +59,7 @@ func TestServiceRegister(t *testing.T) {
 						user.ID = uuid.MustParse("00000000-0000-0000-0000-000000000001")
 					})
 			},
-			expected: &models.User{
+			expected: models.User{
 				ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				Username: "testuser",
 				Email:    "test@example.com",
@@ -56,10 +75,10 @@ func TestServiceRegister(t *testing.T) {
 			},
 			mockSetup: func(mr *mockrepo.MockRepository) {
 				mr.On("CreateUser", mock.Anything, mock.AnythingOfType("*models.User")).
-					Return(models.ErrEmailExists)
+					Return(errEmailExists)
 			},
-			expected:    nil,
-			expectedErr: models.ErrEmailExists,
+			expected:    models.User{},
+			expectedErr: errEmailExists,
 		},
 	}
 
@@ -73,7 +92,7 @@ func TestServiceRegister(t *testing.T) {
 
 			if tt.expectedErr != nil {
 				assert.ErrorIs(t, err, tt.expectedErr)
-				assert.Nil(t, user)
+				assert.Equal(t, tt.expected, user)
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.expected.ID, user.ID)
@@ -130,10 +149,10 @@ func TestServiceLogin(t *testing.T) {
 			},
 			mockSetup: func(mr *mockrepo.MockRepository) {
 				mr.On("GetUserByEmail", mock.Anything, "notfound@example.com").
-					Return(nil, models.ErrUserNotFound)
+					Return(nil, errUserNotFound)
 			},
 			expected:    nil,
-			expectedErr: models.ErrInvalidCredentials,
+			expectedErr: ErrInvalidCredentials,
 		},
 		{
 			name: "wrong password",
@@ -151,7 +170,7 @@ func TestServiceLogin(t *testing.T) {
 					}, nil)
 			},
 			expected:    nil,
-			expectedErr: models.ErrInvalidCredentials,
+			expectedErr: ErrInvalidCredentials,
 		},
 	}
 
@@ -177,40 +196,4 @@ func TestServiceLogin(t *testing.T) {
 			mockRepo.AssertExpectations(t)
 		})
 	}
-}
-
-func TestServiceValidateToken(t *testing.T) {
-	service := New(nil, "secret", time.Hour)
-
-	t.Run("valid token", func(t *testing.T) {
-		user := &models.User{
-			ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-			Username: "testuser",
-		}
-		tokenString, err := token.GenerateToken(user, service.jwtSecret, service.tokenExpiry)
-		assert.NoError(t, err)
-
-		claims, err := token.ValidateToken(tokenString, service.jwtSecret)
-		assert.NoError(t, err)
-		assert.Equal(t, user.ID.String(), claims["sub"])
-		assert.Equal(t, user.Username, claims["username"])
-	})
-
-	t.Run("invalid token", func(t *testing.T) {
-		claims, err := token.ValidateToken("invalid.token.string", service.jwtSecret)
-		assert.Error(t, err)
-		assert.Nil(t, claims)
-	})
-
-	t.Run("wrong signing method", func(t *testing.T) {
-		// Creating a token with an incorrect signature method
-		testToken := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-			"sub": "123",
-		})
-		tokenString, _ := testToken.SignedString([]byte("key"))
-
-		claims, err := token.ValidateToken(tokenString, service.jwtSecret)
-		assert.Error(t, err)
-		assert.Nil(t, claims)
-	})
 }

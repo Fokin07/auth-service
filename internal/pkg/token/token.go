@@ -3,6 +3,7 @@ package token
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/AlexFox86/auth-service/internal/models"
@@ -24,6 +25,7 @@ func GenerateToken(user *models.User, jwtSecret []byte, tokenExpiry time.Duratio
 
 // ValidateToken checks the JWT token
 func ValidateToken(tokenString string, jwtSecret []byte) (jwt.MapClaims, error) {
+	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])

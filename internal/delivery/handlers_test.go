@@ -3,6 +3,7 @@ package delivery
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -18,6 +19,8 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+var errUserNotFound = errors.New("user not found")
+
 func TestHandlerRegister(t *testing.T) {
 	mockRepo := new(mockrepo.MockRepository)
 	service := service.New(mockRepo, "secret", time.Hour)
@@ -25,7 +28,7 @@ func TestHandlerRegister(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		requestBody    interface{}
+		requestBody    any
 		mockSetup      func()
 		expectedStatus int
 	}{
@@ -44,7 +47,7 @@ func TestHandlerRegister(t *testing.T) {
 		},
 		{
 			name: "invalid request body",
-			requestBody: map[string]interface{}{
+			requestBody: map[string]any{
 				"username": 123, // incorrect type
 				"email":    "test@example.com",
 				"password": "password123",
@@ -71,7 +74,7 @@ func TestHandlerRegister(t *testing.T) {
 			},
 			mockSetup: func() {
 				mockRepo.On("CreateUser", mock.Anything, mock.AnythingOfType("*models.User")).
-					Return(models.ErrEmailExists).Once()
+					Return(errEmailExists).Once()
 			},
 			expectedStatus: http.StatusConflict,
 		},
@@ -103,7 +106,7 @@ func TestHandlerLogin(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		requestBody    interface{}
+		requestBody    any
 		mockSetup      func()
 		expectedStatus int
 	}{
@@ -149,7 +152,7 @@ func TestHandlerLogin(t *testing.T) {
 			},
 			mockSetup: func() {
 				mockRepo.On("GetUserByEmail", mock.Anything, "notfound@example.com").
-					Return(nil, models.ErrUserNotFound)
+					Return(nil, errUserNotFound)
 			},
 			expectedStatus: http.StatusUnauthorized,
 		},

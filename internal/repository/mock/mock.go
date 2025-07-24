@@ -2,6 +2,7 @@ package mockrepo
 
 import (
 	"context"
+	"time"
 
 	"github.com/AlexFox86/auth-service/internal/models"
 	"github.com/stretchr/testify/mock"
@@ -13,9 +14,13 @@ type MockRepository struct {
 }
 
 // CreateUser creates a new user
-func (m *MockRepository) CreateUser(ctx context.Context, user *models.User) error {
-	args := m.Called(ctx, user)
-	return args.Error(0)
+func (m *MockRepository) CreateUser(ctx context.Context, user models.User) (models.User, error) {
+	args := m.Called(ctx, &user)
+
+	user.CreatedAt = time.Now()
+	user.UpdatedAt = user.CreatedAt
+
+	return user, args.Error(0)
 }
 
 // GetUserByEmail gets the user by email

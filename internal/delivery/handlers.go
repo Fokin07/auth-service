@@ -5,15 +5,15 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/go-playground/validator/v10"
 
 	"github.com/AlexFox86/auth-service/internal/delivery/dto"
-	"github.com/AlexFox86/auth-service/internal/models"
 	"github.com/AlexFox86/auth-service/internal/pkg/token"
 	"github.com/AlexFox86/auth-service/internal/service"
 )
+
+var errEmailExists = errors.New("email already exists")
 
 // Handler provides HTTP handlers for authentication
 type Handler struct {
@@ -44,7 +44,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.service.Register(r.Context(), &req)
 	if err != nil {
-		if errors.Is(err, models.ErrEmailExists) {
+		if errors.Is(err, errEmailExists) {
 			http.Error(w, "email already exists", http.StatusConflict)
 			return
 		}
@@ -71,7 +71,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.service.Login(r.Context(), &req)
 	if err != nil {
-		if errors.Is(err, models.ErrInvalidCredentials) {
+		if errors.Is(err, service.ErrInvalidCredentials) {
 			http.Error(w, "invalid credentials", http.StatusUnauthorized)
 			return
 		}
@@ -91,8 +91,7 @@ func (h *Handler) Validate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-	claims, err := token.ValidateToken(tokenString, h.service.JwtSecret())
+	claims, err := token.ValidateToken(authHeader, h.service.JwtSecret())
 	if err != nil {
 		http.Error(w, "invalid token", http.StatusUnauthorized)
 		return
