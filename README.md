@@ -84,6 +84,6 @@ Response:
 
 ```
 {
-    valid token
+    "valid token"
 }
 ```
