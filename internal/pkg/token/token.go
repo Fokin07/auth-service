@@ -1,7 +1,6 @@
 package token
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -26,7 +25,9 @@ func GenerateToken(user *models.User, jwtSecret []byte, tokenExpiry time.Duratio
 // ValidateToken checks the JWT token
 func ValidateToken(tokenString string, jwtSecret []byte) (jwt.MapClaims, error) {
 	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	claims := jwt.MapClaims{}
+
+	_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
@@ -37,9 +38,5 @@ func ValidateToken(tokenString string, jwtSecret []byte) (jwt.MapClaims, error) 
 		return nil, fmt.Errorf("parse token: %w", err)
 	}
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return claims, nil
-	}
-
-	return nil, errors.New("invalid token")
+	return claims, nil
 }
