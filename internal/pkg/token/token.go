@@ -27,7 +27,7 @@ func ValidateToken(tokenString string, jwtSecret []byte) (jwt.MapClaims, error) 
 	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
 	claims := jwt.MapClaims{}
 
-	_, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (any, error) {
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
@@ -36,6 +36,10 @@ func ValidateToken(tokenString string, jwtSecret []byte) (jwt.MapClaims, error) 
 
 	if err != nil {
 		return nil, fmt.Errorf("parse token: %w", err)
+	}
+
+	if !token.Valid {
+		return nil, fmt.Errorf("invalid token")
 	}
 
 	return claims, nil
