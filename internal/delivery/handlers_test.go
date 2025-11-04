@@ -38,6 +38,7 @@ func TestHandlerRegister(t *testing.T) {
 				Username: "testuser",
 				Email:    "test@example.com",
 				Password: "password123",
+				Role:     "Admin",
 			},
 			mockSetup: func() {
 				mockRepo.On("CreateUser", mock.Anything, mock.AnythingOfType("*models.User")).
@@ -56,11 +57,12 @@ func TestHandlerRegister(t *testing.T) {
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
-			name: "validation error",
+			name: "Username validation error",
 			requestBody: dto.RegisterRequest{
 				Username: "te", // the name is too short
 				Email:    "test@example.com",
 				Password: "password123",
+				Role:     "Admin",
 			},
 			mockSetup:      func() {},
 			expectedStatus: http.StatusBadRequest,
@@ -71,6 +73,21 @@ func TestHandlerRegister(t *testing.T) {
 				Username: "testuser",
 				Email:    "exists@example.com",
 				Password: "password123",
+				Role:     "Admin",
+			},
+			mockSetup: func() {
+				mockRepo.On("CreateUser", mock.Anything, mock.AnythingOfType("*models.User")).
+					Return(errEmailExists).Once()
+			},
+			expectedStatus: http.StatusConflict,
+		},
+		{
+			name: "Role validation error",
+			requestBody: dto.RegisterRequest{
+				Username: "testuser",
+				Email:    "exists@example.com",
+				Password: "password123",
+				Role:     "Admin",
 			},
 			mockSetup: func() {
 				mockRepo.On("CreateUser", mock.Anything, mock.AnythingOfType("*models.User")).

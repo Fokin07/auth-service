@@ -52,6 +52,7 @@ func (s *Service) Register(ctx context.Context, req *dto.RegisterRequest) (model
 	user := models.User{
 		Username: req.Username,
 		Email:    req.Email,
+		Role:     req.Role,
 		Password: hashedPassword,
 	}
 
