@@ -49,6 +49,7 @@ func TestServiceRegister(t *testing.T) {
 			req: &dto.RegisterRequest{
 				Username: "testuser",
 				Email:    "test@example.com",
+				Role:     "Admin",
 				Password: "password123",
 			},
 			mockSetup: func(mr *mockrepo.MockRepository) {
@@ -63,6 +64,7 @@ func TestServiceRegister(t *testing.T) {
 				ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				Username: "testuser",
 				Email:    "test@example.com",
+				Role:     "Admin",
 			},
 			expectedErr: nil,
 		},
@@ -71,6 +73,7 @@ func TestServiceRegister(t *testing.T) {
 			req: &dto.RegisterRequest{
 				Username: "testuser",
 				Email:    "exists@example.com",
+				Role:     "Admin",
 				Password: "password123",
 			},
 			mockSetup: func(mr *mockrepo.MockRepository) {
@@ -128,6 +131,7 @@ func TestServiceLogin(t *testing.T) {
 						ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 						Username: "testuser",
 						Email:    "test@example.com",
+						Role:     "Admin",
 						Password: hashedPassword,
 					}, nil)
 			},
@@ -136,6 +140,7 @@ func TestServiceLogin(t *testing.T) {
 					ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Username: "testuser",
 					Email:    "test@example.com",
+					Role:     "Admin",
 					Password: hashedPassword,
 				},
 			},
@@ -166,6 +171,7 @@ func TestServiceLogin(t *testing.T) {
 						ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 						Username: "testuser",
 						Email:    "test@example.com",
+						Role:     "Admin",
 						Password: hashedPassword,
 					}, nil)
 			},

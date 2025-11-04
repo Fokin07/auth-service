@@ -38,8 +38,8 @@ func (r *PgRepository) CreateUser(ctx context.Context, user models.User) (models
 	user.UpdatedAt = user.CreatedAt
 
 	query := `
-		INSERT INTO users (id, username, email, password, created_at, updated_at)
-		VALUES (:id, :username, :email, :password, :created_at, :updated_at)`
+		INSERT INTO users (id, username, email, role, password, created_at, updated_at)
+		VALUES (:id, :username, :email, :role, :password, :created_at, :updated_at)`
 
 	_, err := r.db.NamedExecContext(ctx, query, user)
 	if err != nil {
